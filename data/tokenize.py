@@ -11,7 +11,9 @@ def tokenize_txt_tiktoken(text_file: str, out_filename: str = "train.bin"):
             data = f.read(10**9)
             if not data:
                 break
-            input_ids = np.array(tokenizer.encode(data)).astype(np.uint16)
+            input_ids = np.array(
+                tokenizer.encode(data, allowed_special={"<|endoftext|>"})
+            ).astype(np.uint16)
             if first_save:
                 np.save(out_filename, input_ids)
                 first_save = False
