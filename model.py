@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-
+import bitsandbytes as bnb
 
 class LayerNorm(nn.Module):
     """LayerNorm but with an optional bias. PyTorch doesn't support simply bias=False"""
@@ -231,7 +231,7 @@ class GPT(nn.Module):
 
         return logits, loss
 
-    def configure_optimizers(self, weight_decay, learning_rate, betas, device_type):
+    def configure_optimizers(self, weight_decay, learning_rate, betas, device_type, optim="torch"):
         # start with all of the candidate parameters
         param_dict = {pn: p for pn, p in self.named_parameters()}
         # filter out those that do not require grad
@@ -256,10 +256,18 @@ class GPT(nn.Module):
         fused_available = "fused" in inspect.signature(torch.optim.AdamW).parameters
         use_fused = fused_available and device_type == "cuda"
         extra_args = dict(fused=True) if use_fused else dict()
-        optimizer = torch.optim.AdamW(
-            optim_groups, lr=learning_rate, betas=betas, **extra_args
-        )
-        print(f"using fused AdamW: {use_fused}")
+        if optim == "torch":
+            optimizer = torch.optim.AdamW(
+                optim_groups, lr=learning_rate, betas=betas, **extra_args
+            )
+            print(f"using fused AdamW: {use_fused}")
+        elif optim == "bnb":
+            optimizer = bnb.optim.AdamW8bit(
+                optim_groups, lr=learning_rate, betas=betas, **extra_args
+            )
+        else:
+            print("Invalid optim type")
+            return None
 
         return optimizer
 
