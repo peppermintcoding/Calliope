@@ -263,7 +263,7 @@ class GPT(nn.Module):
             print(f"using fused AdamW: {use_fused}")
         elif optim == "bnb":
             optimizer = bnb.optim.AdamW8bit(
-                optim_groups, lr=learning_rate, betas=betas, **extra_args
+                optim_groups, lr=learning_rate, betas=betas
             )
         else:
             print("Invalid optim type")
